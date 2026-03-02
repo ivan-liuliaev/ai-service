@@ -60,6 +60,14 @@ curl -s -X POST http://localhost:8000/analyze-matchup \
 - Duplicate `id` values in one request -> `400`
 - Unexpected server error -> `500`
 
+## Tests (minimal smoke tests)
+
+```bash
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+pytest -q
+```
+
 ## Next iteration (LLM)
 
 Keep this same endpoint/contract and swap the stub opinion generator with real LLM output.
