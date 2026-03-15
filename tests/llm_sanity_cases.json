@@ -1,0 +1,138 @@
+{
+  "matchups": [
+    {
+      "id": "case-1-favorite-should-cover",
+      "team1": "Boston Celtics",
+      "team2": "Chicago Bulls",
+      "context": {
+        "team1": {
+          "pts": 119.0,
+          "reb": 45.5,
+          "ast": 27.8,
+          "three_pt_made": 15.4,
+          "pace": 99.5,
+          "last10_pts": 121.0,
+          "pts_allowed": 108.7
+        },
+        "team2": {
+          "pts": 111.2,
+          "reb": 42.9,
+          "ast": 24.0,
+          "three_pt_made": 12.2,
+          "pace": 96.9,
+          "last10_pts": 110.1,
+          "pts_allowed": 115.0
+        },
+        "shared": {
+          "team1_spread": -4.5
+        }
+      }
+    },
+    {
+      "id": "case-2-favorite-too-big-line",
+      "team1": "Denver Nuggets",
+      "team2": "Portland Trail Blazers",
+      "context": {
+        "team1": {
+          "pts": 116.0,
+          "reb": 44.3,
+          "ast": 29.0,
+          "pace": 97.0,
+          "last10_pts": 115.0,
+          "pts_allowed": 111.5
+        },
+        "team2": {
+          "pts": 108.8,
+          "reb": 42.0,
+          "ast": 23.8,
+          "pace": 98.2,
+          "last10_pts": 109.3,
+          "pts_allowed": 116.8
+        },
+        "shared": {
+          "team1_spread": -12.5
+        }
+      }
+    },
+    {
+      "id": "case-3-underdog-can-cover",
+      "team1": "New York Knicks",
+      "team2": "Cleveland Cavaliers",
+      "context": {
+        "team1": {
+          "pts": 112.7,
+          "reb": 46.0,
+          "ast": 24.6,
+          "pace": 95.8,
+          "last10_pts": 112.1,
+          "pts_allowed": 109.0
+        },
+        "team2": {
+          "pts": 114.0,
+          "reb": 44.2,
+          "ast": 26.2,
+          "pace": 96.1,
+          "last10_pts": 113.0,
+          "pts_allowed": 109.6
+        },
+        "shared": {
+          "team1_spread": 5.5
+        }
+      }
+    },
+    {
+      "id": "case-4-close-call",
+      "team1": "Phoenix Suns",
+      "team2": "Dallas Mavericks",
+      "context": {
+        "team1": {
+          "pts": 114.4,
+          "reb": 43.3,
+          "ast": 25.7,
+          "pace": 98.1,
+          "last10_pts": 113.8,
+          "pts_allowed": 113.1
+        },
+        "team2": {
+          "pts": 114.8,
+          "reb": 43.1,
+          "ast": 25.5,
+          "pace": 98.0,
+          "last10_pts": 114.0,
+          "pts_allowed": 113.2
+        },
+        "shared": {
+          "team1_spread": -1.0
+        }
+      }
+    },
+    {
+      "id": "case-5-missing-spread",
+      "team1": "Orlando Magic",
+      "team2": "Indiana Pacers",
+      "context": {
+        "team1": {
+          "pts": 110.5,
+          "reb": 42.8,
+          "ast": 24.0,
+          "pace": 96.2,
+          "last10_pts": 109.2,
+          "pts_allowed": 107.9
+        },
+        "team2": {
+          "pts": 121.0,
+          "reb": 41.8,
+          "ast": 30.0,
+          "pace": 101.5,
+          "last10_pts": 121.8,
+          "pts_allowed": 119.6
+        },
+        "shared": {
+          "rest_days_team1": 2,
+          "rest_days_team2": 1
+        }
+      }
+    }
+  ]
+}
+

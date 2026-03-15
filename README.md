@@ -111,6 +111,16 @@ pip install -r requirements-dev.txt
 pytest -q
 ```
 
+Real LLM sanity suite (writes `reports/llm_sanity_latest.json`):
+
+```bash
+source .venv/bin/activate
+export RUN_LLM_SANITY=1
+export OPINION_LLM_ENABLED=true
+export OLLAMA_MODEL=qwen2.5:7b-instruct
+pytest -m llm_sanity -q
+```
+
 Sanity checks covered:
 
 - valid request without context
@@ -118,6 +128,7 @@ Sanity checks covered:
 - duplicate id handling
 - invalid payload handling
 - LLM path and fallback path
+- optional real-LLM sanity regression run (5 curated cases + saved report artifact)
 
 ## Next
 
