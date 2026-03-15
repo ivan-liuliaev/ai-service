@@ -96,7 +96,7 @@ def test_llm_sanity_regression() -> None:
         assert opinion.startswith(ALLOWED_PREFIXES), f"{matchup_id}: invalid prefix"
         if any(marker in opinion.lower() for marker in UNCERTAINTY_MARKERS):
             uncertainty_hits += 1
-        if "directional only" in opinion.lower():
+        if "baseline projection" in opinion.lower():
             fallback_like_hits += 1
 
         verdicts[matchup_id] = verdict

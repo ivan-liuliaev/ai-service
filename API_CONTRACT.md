@@ -82,6 +82,7 @@
 
 ## Reliability behavior
 
+- Verdict selection is deterministic from numeric projection + spread band (LLM does not pick verdict).
 - Tries local LLM when enabled/configured.
 - Applies timeout and one retry by default.
 - Falls back to deterministic opinion if LLM call fails.

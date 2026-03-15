@@ -9,6 +9,7 @@ Standalone FastAPI service for NBA pre-game matchup opinions.
 - Same response shape (`results[].id`, `results[].opinion`)
 - Flexible optional stats context (add/remove fields without schema rewrites)
 - Output target is Team1 spread-cover lean (`covers` / `does not cover` / `too close`)
+- Verdict is deterministic (numeric projection + spread band), LLM is explanation-only
 - LLM-first when configured, safe fallback otherwise
 
 ## Quick start
@@ -43,6 +44,7 @@ export OLLAMA_MODEL=qwen2.5:7b-instruct
 export OLLAMA_URL=http://127.0.0.1:11434
 export LLM_TIMEOUT_SECONDS=8
 export LLM_MAX_RETRIES=1
+export SPREAD_NO_BET_BAND=2.0
 ```
 
 If LLM fails/unavailable, service returns fallback opinion text.

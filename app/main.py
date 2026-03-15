@@ -4,6 +4,7 @@ import json
 import os
 import urllib.error
 import urllib.request
+from dataclasses import dataclass
 from numbers import Real
 from typing import Annotated
 
@@ -46,6 +47,15 @@ class AnalyzeMatchupResponse(BaseModel):
     results: list[MatchupResult]
 
 
+@dataclass
+class SpreadDecision:
+    verdict: str
+    spread: float | None
+    projected_margin: float | None
+    cover_edge: float | None
+    reason: str
+
+
 def _format_metrics(metrics: dict[str, MetricValue] | None) -> str:
     if not metrics:
         return "none"
@@ -76,21 +86,123 @@ def _extract_team1_spread(matchup: Matchup) -> float | None:
     return None
 
 
-def build_prompt(matchup: Matchup) -> str:
+def _as_numeric(metrics: dict[str, MetricValue] | None) -> dict[str, float]:
+    if not metrics:
+        return {}
+    numeric: dict[str, float] = {}
+    for key, value in metrics.items():
+        if isinstance(value, bool):
+            continue
+        if isinstance(value, Real):
+            numeric[key] = float(value)
+    return numeric
+
+
+def _metric(metrics: dict[str, float], key: str) -> float | None:
+    value = metrics.get(key)
+    if value is None:
+        return None
+    return float(value)
+
+
+def _compute_projected_margin(matchup: Matchup) -> float | None:
+    team1 = _as_numeric(matchup.context.team1 if matchup.context else None)
+    team2 = _as_numeric(matchup.context.team2 if matchup.context else None)
+
+    team1_pts = _metric(team1, "pts")
+    team1_pts_allowed = _metric(team1, "pts_allowed")
+    team2_pts = _metric(team2, "pts")
+    team2_pts_allowed = _metric(team2, "pts_allowed")
+
+    if None in (team1_pts, team1_pts_allowed, team2_pts, team2_pts_allowed):
+        return None
+
+    net1 = team1_pts - team1_pts_allowed
+    net2 = team2_pts - team2_pts_allowed
+
+    projected_margin = net1 - net2
+
+    team1_last10 = _metric(team1, "last10_pts")
+    team2_last10 = _metric(team2, "last10_pts")
+    if team1_last10 is not None and team2_last10 is not None:
+        projected_margin += 0.5 * (team1_last10 - team2_last10)
+
+    team1_pace = _metric(team1, "pace")
+    team2_pace = _metric(team2, "pace")
+    if team1_pace is not None and team2_pace is not None:
+        projected_margin += 0.2 * (team1_pace - team2_pace)
+
+    return projected_margin
+
+
+def _determine_spread_decision(matchup: Matchup) -> SpreadDecision:
     spread = _extract_team1_spread(matchup)
+    if spread is None:
+        return SpreadDecision(
+            verdict="Lean: too close to call.",
+            spread=None,
+            projected_margin=None,
+            cover_edge=None,
+            reason="Spread input is missing, so cover evaluation is not reliable.",
+        )
+
+    projected_margin = _compute_projected_margin(matchup)
+    if projected_margin is None:
+        return SpreadDecision(
+            verdict="Lean: too close to call.",
+            spread=spread,
+            projected_margin=None,
+            cover_edge=None,
+            reason="Core scoring/defense metrics are incomplete.",
+        )
+
+    cover_edge = projected_margin + spread
+    no_bet_band = float(os.getenv("SPREAD_NO_BET_BAND", "2.0"))
+    if abs(cover_edge) < no_bet_band:
+        return SpreadDecision(
+            verdict="Lean: too close to call.",
+            spread=spread,
+            projected_margin=projected_margin,
+            cover_edge=cover_edge,
+            reason=(
+                f"Projected edge ({cover_edge:.1f}) is inside the no-bet band "
+                f"(±{no_bet_band:.1f})."
+            ),
+        )
+
+    verdict = (
+        "Lean: Team1 covers."
+        if cover_edge > 0
+        else "Lean: Team1 does not cover."
+    )
+    return SpreadDecision(
+        verdict=verdict,
+        spread=spread,
+        projected_margin=projected_margin,
+        cover_edge=cover_edge,
+        reason=(
+            f"Projected margin is {projected_margin:.1f} vs required {-spread:.1f}, "
+            f"edge {cover_edge:.1f}."
+        ),
+    )
+
+
+def build_prompt(matchup: Matchup) -> str:
+    decision = _determine_spread_decision(matchup)
     spread_line = (
-        f"team1_spread: {spread} (negative means team1 favored by that many points)"
-        if spread is not None
+        f"team1_spread: {decision.spread} (negative means team1 favored by that many points)"
+        if decision.spread is not None
         else "team1_spread: missing"
     )
     return (
         "You are an NBA pre-game matchup assistant.\n"
-        "Write exactly 2-3 short sentences with this structure:\n"
-        "1) one of exactly: 'Lean: Team1 covers', 'Lean: Team1 does not cover', "
-        "or 'Lean: too close to call'\n"
-        "2) one or two metric-based reasons from provided context\n"
-        "3) one uncertainty/risk note.\n"
-        "Keep it under 60 words. No bullets. Not betting advice.\n\n"
+        "The verdict is already computed by a deterministic model. Do not change it.\n"
+        "Write exactly two short sentences:\n"
+        "1) one or two reasons tied to provided metrics\n"
+        "2) one uncertainty/risk note.\n"
+        "Keep it under 50 words. No bullets. No verdict prefix. Not betting advice.\n\n"
+        f"Fixed verdict: {decision.verdict}\n"
+        f"Deterministic reason: {decision.reason}\n"
         f"Matchup: {matchup.team1} vs {matchup.team2}\n"
         f"{spread_line}\n"
         f"{_format_context_lines(matchup)}"
@@ -105,64 +217,19 @@ def _normalize_opinion(text: str, max_words: int = 60) -> str:
     return cleaned
 
 
-def _enforce_spread_verdict(text: str) -> str:
-    if text.startswith("Lean: Team1 covers"):
-        return text
-    if text.startswith("Lean: Team1 does not cover"):
-        return text
-    if text.startswith("Lean: too close to call"):
-        return text
-    return f"Lean: too close to call. {text}"
-
-
-def _as_numeric(metrics: dict[str, MetricValue] | None) -> dict[str, float]:
-    if not metrics:
-        return {}
-    numeric: dict[str, float] = {}
-    for key, value in metrics.items():
-        if isinstance(value, bool):
-            continue
-        if isinstance(value, Real):
-            numeric[key] = float(value)
-    return numeric
-
-
-def build_fallback_opinion(matchup: Matchup) -> str:
-    spread = _extract_team1_spread(matchup)
-    team1_numeric = _as_numeric(matchup.context.team1 if matchup.context else None)
-    team2_numeric = _as_numeric(matchup.context.team2 if matchup.context else None)
-
-    comparable_keys = [key for key in team1_numeric if key in team2_numeric]
-    team1_edges = sum(1 for key in comparable_keys if team1_numeric[key] > team2_numeric[key])
-    team2_edges = sum(1 for key in comparable_keys if team2_numeric[key] > team1_numeric[key])
-    edge_delta = team1_edges - team2_edges
-
-    if spread is None:
-        verdict = "Lean: too close to call."
-        reason = "Spread input is missing, so this uses a conservative baseline"
-        return f"{verdict} {reason}. Volatility remains high, so treat this as directional only."
-
-    if comparable_keys:
-        if spread < 0:
-            if edge_delta >= 1:
-                verdict = "Lean: Team1 covers."
-            elif edge_delta <= -1:
-                verdict = "Lean: Team1 does not cover."
-            else:
-                verdict = "Lean: too close to call."
-        else:
-            if edge_delta >= 1:
-                verdict = "Lean: Team1 covers."
-            elif edge_delta <= -2:
-                verdict = "Lean: Team1 does not cover."
-            else:
-                verdict = "Lean: too close to call."
-        reason = "Compared metrics versus the spread are mixed" if verdict.endswith("call.") else "Compared metrics support this spread lean"
-    else:
-        verdict = "Lean: too close to call."
-        reason = "Context is limited, so this uses a conservative baseline"
-
-    return f"{verdict} {reason}. Volatility remains high, so treat this as directional only."
+def _strip_verdict_prefix(text: str) -> str:
+    prefixes = (
+        "Lean: Team1 covers.",
+        "Lean: Team1 does not cover.",
+        "Lean: too close to call.",
+    )
+    for prefix in prefixes:
+        if text.startswith(prefix):
+            stripped = text[len(prefix) :].strip()
+            if stripped:
+                return stripped
+            return "Deterministic edge is narrow, so uncertainty remains high."
+    return text
 
 
 def _llm_enabled() -> bool:
@@ -217,13 +284,18 @@ def _call_ollama_with_retry(prompt: str) -> str:
 
 
 def generate_opinion(matchup: Matchup) -> str:
+    decision = _determine_spread_decision(matchup)
     if _llm_enabled():
         try:
             llm_text = _call_ollama_with_retry(build_prompt(matchup))
-            return _enforce_spread_verdict(_normalize_opinion(llm_text))
+            explanation = _strip_verdict_prefix(_normalize_opinion(llm_text))
+            return f"{decision.verdict} {explanation}"
         except Exception:  # noqa: BLE001
             pass
-    return build_fallback_opinion(matchup)
+    return (
+        f"{decision.verdict} {decision.reason} "
+        "This is a baseline projection with uncertainty."
+    )
 
 
 @app.get("/")
