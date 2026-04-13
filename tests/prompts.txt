@@ -1,0 +1,226 @@
+curl -s -X POST http://127.0.0.1:8000/analyze-matchup \
+  -H "Content-Type: application/json" \
+  -d '{
+    "matchups": [
+      {
+        "id": "1-favorite-covers",
+        "team1": "Boston Celtics",
+        "team2": "Chicago Bulls",
+        "context": {
+          "team1": {
+            "net_rating": 8.4,
+            "line_hit_rate_l10": 70,
+            "pace": 98.5,
+            "reb_differential": 4.2
+          },
+          "team2": {
+            "net_rating": -1.2,
+            "line_hit_rate_l10": 30,
+            "pace": 102.1,
+            "reb_differential": -3.5
+          },
+          "shared": {
+            "team1_spread": -4.5
+          }
+        }
+      },
+      {
+        "id": "2-favorite-too-big-line",
+        "team1": "Denver Nuggets",
+        "team2": "Portland Trail Blazers",
+        "context": {
+          "team1": {
+            "net_rating": 4.2,
+            "line_hit_rate_l10": 60,
+            "pace": 97.3,
+            "reb_differential": 1.5
+          },
+          "team2": {
+            "net_rating": -0.5,
+            "line_hit_rate_l10": 50,
+            "pace": 98.8,
+            "reb_differential": -0.8
+          },
+          "shared": {
+            "team1_spread": -12.5
+          }
+        }
+      },
+      {
+        "id": "3-underdog-covers",
+        "team1": "New York Knicks",
+        "team2": "Cleveland Cavaliers",
+        "context": {
+          "team1": {
+            "net_rating": 2.1,
+            "line_hit_rate_l10": 80,
+            "pace": 95.2,
+            "reb_differential": 5.1
+          },
+          "team2": {
+            "net_rating": 4.0,
+            "line_hit_rate_l10": 40,
+            "pace": 95.8,
+            "reb_differential": -0.2
+          },
+          "shared": {
+            "team1_spread": 6.5
+          }
+        }
+      },
+      {
+        "id": "4-close-call-band",
+        "team1": "Phoenix Suns",
+        "team2": "Dallas Mavericks",
+        "context": {
+          "team1": {
+            "net_rating": 1.4,
+            "line_hit_rate_l10": 50,
+            "pace": 98.2,
+            "reb_differential": 0.4
+          },
+          "team2": {
+            "net_rating": 1.0,
+            "line_hit_rate_l10": 48,
+            "pace": 98.0,
+            "reb_differential": 0.0
+          },
+          "shared": {
+            "team1_spread": -1.0
+          }
+        }
+      },
+      {
+        "id": "5-missing-spread",
+        "team1": "Orlando Magic",
+        "team2": "Indiana Pacers",
+        "context": {
+          "team1": {
+            "net_rating": 1.2,
+            "line_hit_rate_l10": 60,
+            "pace": 96.2,
+            "reb_differential": 2.0
+          },
+          "team2": {
+            "net_rating": 3.1,
+            "line_hit_rate_l10": 55,
+            "pace": 101.5,
+            "reb_differential": -0.5
+          },
+          "shared": {
+            "rest_days_team1": 2,
+            "rest_days_team2": 1
+          }
+        }
+      },
+      {
+        "id": "6-missing-net-rating",
+        "team1": "Miami Heat",
+        "team2": "Atlanta Hawks",
+        "context": {
+          "team1": {
+            "line_hit_rate_l10": 70,
+            "pace": 97.0,
+            "reb_differential": 1.8
+          },
+          "team2": {
+            "net_rating": -0.4,
+            "line_hit_rate_l10": 45,
+            "pace": 100.2,
+            "reb_differential": -1.1
+          },
+          "shared": {
+            "team1_spread": -2.5
+          }
+        }
+      },
+      {
+        "id": "7-pickem-style",
+        "team1": "Sacramento Kings",
+        "team2": "Golden State Warriors",
+        "context": {
+          "team1": {
+            "net_rating": 1.8,
+            "line_hit_rate_l10": 50,
+            "pace": 101.0,
+            "reb_differential": 0.5
+          },
+          "team2": {
+            "net_rating": 1.6,
+            "line_hit_rate_l10": 52,
+            "pace": 100.8,
+            "reb_differential": 0.2
+          },
+          "shared": {
+            "team1_spread": -0.5
+          }
+        }
+      },
+      {
+        "id": "8-big-underdog-still-not-enough",
+        "team1": "Charlotte Hornets",
+        "team2": "Milwaukee Bucks",
+        "context": {
+          "team1": {
+            "net_rating": -5.1,
+            "line_hit_rate_l10": 40,
+            "pace": 99.4,
+            "reb_differential": -2.8
+          },
+          "team2": {
+            "net_rating": 6.0,
+            "line_hit_rate_l10": 65,
+            "pace": 100.1,
+            "reb_differential": 3.4
+          },
+          "shared": {
+            "team1_spread": 7.5
+          }
+        }
+      },
+      {
+        "id": "9-swap-check-a",
+        "team1": "Los Angeles Lakers",
+        "team2": "Boston Celtics",
+        "context": {
+          "team1": {
+            "net_rating": -1.2,
+            "line_hit_rate_l10": 30,
+            "pace": 102.1,
+            "reb_differential": -3.5
+          },
+          "team2": {
+            "net_rating": 8.4,
+            "line_hit_rate_l10": 70,
+            "pace": 98.5,
+            "reb_differential": 4.2
+          },
+          "shared": {
+            "team1_spread": -4.5
+          }
+        }
+      },
+      {
+        "id": "10-swap-check-b",
+        "team1": "Boston Celtics",
+        "team2": "Los Angeles Lakers",
+        "context": {
+          "team1": {
+            "net_rating": 8.4,
+            "line_hit_rate_l10": 70,
+            "pace": 98.5,
+            "reb_differential": 4.2
+          },
+          "team2": {
+            "net_rating": -1.2,
+            "line_hit_rate_l10": 30,
+            "pace": 102.1,
+            "reb_differential": -3.5
+          },
+          "shared": {
+            "team1_spread": 4.5
+          }
+        }
+      }
+    ]
+  }' | jq
