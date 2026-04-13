@@ -179,6 +179,22 @@ def _round_for_response(value: float | None) -> float | None:
     return round(value, 1)
 
 
+def _display_projected_margin(decision: SpreadDecision) -> float | None:
+    if (
+        decision.projected_score_team1 is not None
+        and decision.projected_score_team2 is not None
+    ):
+        return float(decision.projected_score_team1 - decision.projected_score_team2)
+    return _round_for_response(decision.projected_margin)
+
+
+def _display_cover_edge(decision: SpreadDecision) -> float | None:
+    display_margin = _display_projected_margin(decision)
+    if display_margin is None or decision.spread is None:
+        return None
+    return round(display_margin + decision.spread, 1)
+
+
 def _compute_projected_margin(matchup: Matchup) -> float | None:
     team1, team2 = _team_metrics(matchup)
 
@@ -321,8 +337,8 @@ def _build_opening_sentence(matchup: Matchup, decision: SpreadDecision) -> str:
         if decision.projected_score_team1 is not None and decision.projected_score_team2 is not None
         else "n/a"
     )
-    projected_margin = _format_signed(decision.projected_margin)
-    cover_edge = _format_signed(decision.cover_edge)
+    projected_margin = _format_signed(_display_projected_margin(decision))
+    cover_edge = _format_signed(_display_cover_edge(decision))
 
     if decision.verdict == "covers":
         return (
@@ -388,8 +404,8 @@ def build_prompt(matchup: Matchup, decision: SpreadDecision | None = None) -> st
         f"Opponent: {matchup.team2}\n"
         f"Spread: {_format_spread(decision.spread)}\n"
         f"Projected score: {projected_score}\n"
-        f"Projected margin: {_format_signed(decision.projected_margin)}\n"
-        f"Cover edge: {_format_signed(decision.cover_edge)}\n"
+        f"Projected margin: {_format_signed(_display_projected_margin(decision))}\n"
+        f"Cover edge: {_format_signed(_display_cover_edge(decision))}\n"
         f"Projected matchup pace: {_format_number(decision.projected_pace)}\n"
         f"{matchup.team1} metrics: {team1_summary}\n"
         f"{matchup.team2} metrics: {team2_summary}\n"
@@ -456,8 +472,8 @@ def _allowed_numeric_tokens(matchup: Matchup, decision: SpreadDecision) -> set[s
 
     for value in (
         decision.spread,
-        decision.projected_margin,
-        decision.cover_edge,
+        _display_projected_margin(decision),
+        _display_cover_edge(decision),
         decision.projected_pace,
         decision.projected_score_team1,
         decision.projected_score_team2,
@@ -602,8 +618,8 @@ def _build_result(matchup: Matchup) -> MatchupResult:
     return MatchupResult(
         id=matchup.id,
         verdict=decision.verdict,
-        projected_margin=_round_for_response(decision.projected_margin),
-        cover_edge=_round_for_response(decision.cover_edge),
+        projected_margin=_display_projected_margin(decision),
+        cover_edge=_display_cover_edge(decision),
         projected_score=projected_score,
         opinion=generate_opinion(matchup, decision),
     )

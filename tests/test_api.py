@@ -70,8 +70,8 @@ def test_analyze_matchup_uses_requested_metric_set() -> None:
 
     result = response.json()["results"][0]
     assert result["verdict"] == "covers"
-    assert result["projected_margin"] == pytest.approx(10.3, abs=0.1)
-    assert result["cover_edge"] == pytest.approx(5.8, abs=0.1)
+    assert result["projected_margin"] == 11.0
+    assert result["cover_edge"] == 6.5
     assert result["projected_score"] == {"team1": 117, "team2": 106}
     assert result["opinion"].startswith("The Boston Celtics cover the -4.5 spread")
     assert "Team1" not in result["opinion"]
@@ -132,6 +132,42 @@ def test_projected_margin_is_commutative_on_team_swap() -> None:
     )
     assert original_decision.verdict == "covers"
     assert swapped_decision.verdict == "does_not_cover"
+
+
+def test_displayed_margin_and_edge_match_projected_score() -> None:
+    response = client.post(
+        "/analyze-matchup",
+        json={
+            "matchups": [
+                {
+                    "id": "close",
+                    "team1": "Phoenix Suns",
+                    "team2": "Dallas Mavericks",
+                    "context": {
+                        "team1": {
+                            "net_rating": 1.4,
+                            "line_hit_rate_l10": 50,
+                            "pace": 98.2,
+                            "reb_differential": 0.4,
+                        },
+                        "team2": {
+                            "net_rating": 1.0,
+                            "line_hit_rate_l10": 48,
+                            "pace": 98.0,
+                            "reb_differential": 0.0,
+                        },
+                        "shared": {"team1_spread": -1.0},
+                    },
+                }
+            ]
+        },
+    )
+    assert response.status_code == 200
+
+    result = response.json()["results"][0]
+    score_diff = result["projected_score"]["team1"] - result["projected_score"]["team2"]
+    assert result["projected_margin"] == float(score_diff)
+    assert result["cover_edge"] == pytest.approx(score_diff - 1.0, abs=1e-9)
 
 
 def test_build_prompt_handles_flexible_metrics_and_team_names() -> None:
