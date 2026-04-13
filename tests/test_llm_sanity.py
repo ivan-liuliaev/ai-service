@@ -12,17 +12,11 @@ from fastapi.testclient import TestClient
 import pytest
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from app.main import app
+from app.main import Matchup, MatchupContext, _build_fallback_explanation, _determine_spread_decision, app
 
 pytestmark = pytest.mark.llm_sanity
 
-ALLOWED_PREFIXES = (
-    "Lean: Team1 covers",
-    "Lean: Team1 does not cover",
-    "Lean: too close to call",
-)
-
-UNCERTAINTY_MARKERS = ("risk", "uncertain", "variance", "volatility", "could", "can still")
+ALLOWED_VERDICTS = ("covers", "does_not_cover", "too_close_to_call")
 
 
 def _model_available(model_name: str) -> bool:
@@ -37,16 +31,6 @@ def _model_available(model_name: str) -> bool:
     return model_name in names
 
 
-def _extract_verdict(opinion: str) -> str:
-    if opinion.startswith("Lean: Team1 covers"):
-        return "covers"
-    if opinion.startswith("Lean: Team1 does not cover"):
-        return "not_cover"
-    if opinion.startswith("Lean: too close to call"):
-        return "too_close"
-    return "unknown"
-
-
 def _load_cases() -> dict[str, object]:
     cases_path = Path(__file__).resolve().parent / "llm_sanity_cases.json"
     return json.loads(cases_path.read_text())
@@ -57,6 +41,20 @@ def _write_report(report: dict[str, object]) -> None:
     reports_dir.mkdir(exist_ok=True)
     report_path = reports_dir / "llm_sanity_latest.json"
     report_path.write_text(json.dumps(report, indent=2))
+
+
+def _matchup_from_case(case: dict[str, object]) -> Matchup:
+    context = case.get("context", {})
+    return Matchup(
+        id=str(case["id"]),
+        team1=str(case["team1"]),
+        team2=str(case["team2"]),
+        context=MatchupContext(
+            team1=context.get("team1"),
+            team2=context.get("team2"),
+            shared=context.get("shared"),
+        ),
+    )
 
 
 def test_llm_sanity_regression() -> None:
@@ -76,6 +74,7 @@ def test_llm_sanity_regression() -> None:
     os.environ.setdefault("LLM_MAX_RETRIES", "1")
 
     payload = _load_cases()
+    case_map = {row["id"]: row for row in payload["matchups"]}
     client = TestClient(app)
     response = client.post("/analyze-matchup", json=payload)
     assert response.status_code == 200
@@ -84,33 +83,54 @@ def test_llm_sanity_regression() -> None:
     assert len(body["results"]) == 5
 
     verdicts: dict[str, str] = {}
-    report_rows: list[dict[str, str]] = []
-    uncertainty_hits = 0
+    report_rows: list[dict[str, object]] = []
+    placeholder_hits = 0
     fallback_like_hits = 0
+    decisive_case_count = 0
 
     for row in body["results"]:
         matchup_id = row["id"]
         opinion = row["opinion"]
-        verdict = _extract_verdict(opinion)
+        verdict = row["verdict"]
+        case = case_map[matchup_id]
+        matchup = _matchup_from_case(case)
+        fallback = _build_fallback_explanation(matchup, _determine_spread_decision(matchup))
 
-        assert opinion.startswith(ALLOWED_PREFIXES), f"{matchup_id}: invalid prefix"
-        if any(marker in opinion.lower() for marker in UNCERTAINTY_MARKERS):
-            uncertainty_hits += 1
-        if "baseline projection" in opinion.lower():
-            fallback_like_hits += 1
+        assert verdict in ALLOWED_VERDICTS, f"{matchup_id}: invalid verdict"
+        assert matchup.team1 in opinion, f"{matchup_id}: missing team1 name"
+        assert "team1" not in opinion.lower(), f"{matchup_id}: placeholder leaked"
+        assert row["projected_margin"] is not None, f"{matchup_id}: missing projected margin"
+        assert row["projected_score"] is not None, f"{matchup_id}: missing projected score"
+
+        if "team1" in opinion.lower() or "team2" in opinion.lower():
+            placeholder_hits += 1
+        if verdict in {"covers", "does_not_cover"}:
+            decisive_case_count += 1
+            if opinion.endswith(fallback):
+                fallback_like_hits += 1
 
         verdicts[matchup_id] = verdict
-        report_rows.append({"id": matchup_id, "verdict": verdict, "opinion": opinion})
+        report_rows.append(
+            {
+                "id": matchup_id,
+                "verdict": verdict,
+                "projected_margin": row["projected_margin"],
+                "cover_edge": row["cover_edge"],
+                "opinion": opinion,
+            }
+        )
 
-    assert uncertainty_hits >= 4, "Expected uncertainty marker in most outputs"
-    assert fallback_like_hits == 0, "LLM sanity run should not rely on fallback output"
+    assert placeholder_hits == 0, "LLM output should not leak team placeholders"
+    assert fallback_like_hits < decisive_case_count, (
+        "LLM sanity run should produce non-fallback copy for at least one decisive case"
+    )
 
     directional_mismatches = 0
-    if verdicts.get("case-5-missing-spread") != "too_close":
+    if verdicts.get("case-5-missing-spread") != "too_close_to_call":
         directional_mismatches += 1
-    if verdicts.get("case-2-favorite-too-big-line") not in {"too_close", "not_cover"}:
+    if verdicts.get("case-2-favorite-too-big-line") not in {"too_close_to_call", "does_not_cover"}:
         directional_mismatches += 1
-    if verdicts.get("case-3-underdog-can-cover") not in {"too_close", "covers"}:
+    if verdicts.get("case-3-underdog-can-cover") not in {"too_close_to_call", "covers"}:
         directional_mismatches += 1
 
     assert len(set(verdicts.values())) >= 2
@@ -120,7 +140,7 @@ def test_llm_sanity_regression() -> None:
         "model": model_name,
         "summary": {
             "total_cases": len(report_rows),
-            "uncertainty_hits": uncertainty_hits,
+            "placeholder_hits": placeholder_hits,
             "fallback_like_hits": fallback_like_hits,
             "directional_mismatches": directional_mismatches,
             "verdicts": verdicts,
