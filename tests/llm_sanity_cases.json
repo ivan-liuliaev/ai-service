@@ -6,22 +6,16 @@
       "team2": "Chicago Bulls",
       "context": {
         "team1": {
-          "pts": 119.0,
-          "reb": 45.5,
-          "ast": 27.8,
-          "three_pt_made": 15.4,
-          "pace": 99.5,
-          "last10_pts": 121.0,
-          "pts_allowed": 108.7
+          "net_rating": 8.4,
+          "line_hit_rate_l10": 70,
+          "pace": 98.5,
+          "reb_differential": 4.2
         },
         "team2": {
-          "pts": 111.2,
-          "reb": 42.9,
-          "ast": 24.0,
-          "three_pt_made": 12.2,
-          "pace": 96.9,
-          "last10_pts": 110.1,
-          "pts_allowed": 115.0
+          "net_rating": -1.2,
+          "line_hit_rate_l10": 30,
+          "pace": 102.1,
+          "reb_differential": -3.5
         },
         "shared": {
           "team1_spread": -4.5
@@ -34,20 +28,16 @@
       "team2": "Portland Trail Blazers",
       "context": {
         "team1": {
-          "pts": 116.0,
-          "reb": 44.3,
-          "ast": 29.0,
-          "pace": 97.0,
-          "last10_pts": 115.0,
-          "pts_allowed": 111.5
+          "net_rating": 4.2,
+          "line_hit_rate_l10": 60,
+          "pace": 97.3,
+          "reb_differential": 1.5
         },
         "team2": {
-          "pts": 108.8,
-          "reb": 42.0,
-          "ast": 23.8,
-          "pace": 98.2,
-          "last10_pts": 109.3,
-          "pts_allowed": 116.8
+          "net_rating": -0.5,
+          "line_hit_rate_l10": 50,
+          "pace": 98.8,
+          "reb_differential": -0.8
         },
         "shared": {
           "team1_spread": -12.5
@@ -60,23 +50,19 @@
       "team2": "Cleveland Cavaliers",
       "context": {
         "team1": {
-          "pts": 112.7,
-          "reb": 46.0,
-          "ast": 24.6,
-          "pace": 95.8,
-          "last10_pts": 112.1,
-          "pts_allowed": 109.0
+          "net_rating": 2.1,
+          "line_hit_rate_l10": 80,
+          "pace": 95.2,
+          "reb_differential": 5.1
         },
         "team2": {
-          "pts": 114.0,
-          "reb": 44.2,
-          "ast": 26.2,
-          "pace": 96.1,
-          "last10_pts": 113.0,
-          "pts_allowed": 109.6
+          "net_rating": 4.0,
+          "line_hit_rate_l10": 40,
+          "pace": 95.8,
+          "reb_differential": -0.2
         },
         "shared": {
-          "team1_spread": 5.5
+          "team1_spread": 6.5
         }
       }
     },
@@ -86,20 +72,16 @@
       "team2": "Dallas Mavericks",
       "context": {
         "team1": {
-          "pts": 114.4,
-          "reb": 43.3,
-          "ast": 25.7,
-          "pace": 98.1,
-          "last10_pts": 113.8,
-          "pts_allowed": 113.1
+          "net_rating": 1.4,
+          "line_hit_rate_l10": 50,
+          "pace": 98.2,
+          "reb_differential": 0.4
         },
         "team2": {
-          "pts": 114.8,
-          "reb": 43.1,
-          "ast": 25.5,
+          "net_rating": 1.0,
+          "line_hit_rate_l10": 48,
           "pace": 98.0,
-          "last10_pts": 114.0,
-          "pts_allowed": 113.2
+          "reb_differential": 0.0
         },
         "shared": {
           "team1_spread": -1.0
@@ -112,20 +94,16 @@
       "team2": "Indiana Pacers",
       "context": {
         "team1": {
-          "pts": 110.5,
-          "reb": 42.8,
-          "ast": 24.0,
+          "net_rating": 1.2,
+          "line_hit_rate_l10": 60,
           "pace": 96.2,
-          "last10_pts": 109.2,
-          "pts_allowed": 107.9
+          "reb_differential": 2.0
         },
         "team2": {
-          "pts": 121.0,
-          "reb": 41.8,
-          "ast": 30.0,
+          "net_rating": 3.1,
+          "line_hit_rate_l10": 55,
           "pace": 101.5,
-          "last10_pts": 121.8,
-          "pts_allowed": 119.6
+          "reb_differential": -0.5
         },
         "shared": {
           "rest_days_team1": 2,
@@ -135,4 +113,3 @@
     }
   ]
 }
-

@@ -1,16 +1,16 @@
-# Matchup Opinion Service (MVP v2)
+# Matchup Opinion Service (MVP v3)
 
 Standalone FastAPI service for NBA pre-game matchup opinions.
 
 ## Scope
 
 - NBA only
-- `POST /analyze-matchup` (batch support)
-- Same response shape (`results[].id`, `results[].opinion`)
-- Flexible optional stats context (add/remove fields without schema rewrites)
-- Output target is Team1 spread-cover lean (`covers` / `does not cover` / `too close`)
-- Verdict is deterministic (numeric projection + spread band), LLM is explanation-only
-- LLM-first when configured, safe fallback otherwise
+- `POST /analyze-matchup` with batch support
+- Flexible optional stats context with stable request shape
+- Deterministic spread engine based on `net_rating`, `line_hit_rate_l10`, `pace`, and `reb_differential`
+- Real team names in the opinion text, not `Team1` placeholders
+- Structured response fields for `verdict`, `projected_margin`, `cover_edge`, and `projected_score`
+- LLM used for explanation sentences only; fallback copy is deterministic if Ollama fails
 
 ## Quick start
 
@@ -47,7 +47,7 @@ export LLM_MAX_RETRIES=1
 export SPREAD_NO_BET_BAND=2.0
 ```
 
-If LLM fails/unavailable, service returns fallback opinion text.
+If LLM fails or is unavailable, the service still returns a deterministic three-sentence opinion.
 
 ## API example
 
@@ -61,17 +61,24 @@ curl -s -X POST http://localhost:8000/analyze-matchup \
       {
         "id":"1",
         "team1":"Boston Celtics",
-        "team2":"New York Knicks",
+        "team2":"Chicago Bulls",
         "context": {
-          "team1": {"pts": 118.2, "pace": 99.1, "three_pt_made": 14.8},
-          "team2": {"pts": 112.7},
-          "shared": {"team1_spread": -5.5, "rest_days_team1": 2}
+          "team1": {
+            "net_rating": 8.4,
+            "line_hit_rate_l10": 70,
+            "pace": 98.5,
+            "reb_differential": 4.2
+          },
+          "team2": {
+            "net_rating": -1.2,
+            "line_hit_rate_l10": 30,
+            "pace": 102.1,
+            "reb_differential": -3.5
+          },
+          "shared": {
+            "team1_spread": -4.5
+          }
         }
-      },
-      {
-        "id":"2",
-        "team1":"Lakers",
-        "team2":"Warriors"
       }
     ]
   }' | jq
@@ -84,11 +91,14 @@ curl -s -X POST http://localhost:8000/analyze-matchup \
   "results": [
     {
       "id": "1",
-      "opinion": "Lean: Team1 covers. The provided scoring and pace context supports Team1 relative to a -5.5 spread. Volatility remains high, so treat this as directional only."
-    },
-    {
-      "id": "2",
-      "opinion": "Lean: too close to call. Spread input is missing, so this uses a conservative baseline. Volatility remains high, so treat this as directional only."
+      "verdict": "covers",
+      "projected_margin": 11.0,
+      "cover_edge": 6.5,
+      "projected_score": {
+        "team1": 117,
+        "team2": 106
+      },
+      "opinion": "The Boston Celtics cover the -4.5 spread with a projected 117-106 score, a +11.0-point margin, and a +6.5-point edge. Boston Celtics' +8.4 net rating and 70% line hit rate put them well ahead of this number. A projected pace of 100.3 and a +4.2 rebounding differential reinforce their ability to stay ahead on the glass and the scoreboard."
     }
   ]
 }
@@ -96,12 +106,12 @@ curl -s -X POST http://localhost:8000/analyze-matchup \
 
 Spread convention used:
 
-- `context.shared.team1_spread = -5.5` means Team1 is favored by 5.5 (must win by 6+ to cover)
-- `context.shared.team1_spread = +5.5` means Team1 is underdog by 5.5 (can lose by up to 5 and still cover)
+- `context.shared.team1_spread = -5.5` means Team1 is favored by 5.5
+- `context.shared.team1_spread = +5.5` means Team1 is the underdog by 5.5
 
 ## Error behavior
 
-- Invalid JSON/shape/empty fields -> `422`
+- Invalid JSON, invalid shape, or empty fields -> `422`
 - Duplicate `id` values in one request -> `400`
 - Unexpected server error -> `500`
 
@@ -126,12 +136,13 @@ pytest -m llm_sanity -q
 Sanity checks covered:
 
 - valid request without context
-- valid request with partial context fields
+- requested four-metric projection path
+- commutative spread math on team swap
 - duplicate id handling
 - invalid payload handling
-- LLM path and fallback path
-- optional real-LLM sanity regression run (5 curated cases + saved report artifact)
+- LLM path, fallback path, and placeholder cleanup
+- optional real-LLM regression run with saved report artifact
 
 ## Next
 
-Keep contract stable and improve model/prompt quality incrementally.
+Keep the request shape stable and iterate on coefficients or prompt quality only when demo output needs it.
