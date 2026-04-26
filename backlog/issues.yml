@@ -12,48 +12,38 @@ milestones:
     state: open
 
 issues:
-  - id: final-sprint-feature-structured-spread-response
-    title: "Feature: return structured spread analysis fields"
-    labels:
-      - enhancement
-    milestone: Sprint 4
-    body: |
-      ## Feature
-      Expand the matchup analysis response from a single opinion string into a structured spread analysis result.
-
-      ## Motivation
-      The backend needs stable fields it can consume directly instead of parsing freeform text. The service should return the spread verdict, projected margin, cover edge, projected score, and explanation while keeping the endpoint stable.
-
-      ## Acceptance criteria
-      - Response includes a `verdict` field for each matchup.
-      - Response includes `projected_margin`, `cover_edge`, and `projected_score`.
-      - Opinion text uses actual team names and summarizes the deterministic spread result.
-      - Missing spread or incomplete metric inputs return a conservative `too_close_to_call` result.
-      - API contract and tests are updated for the new response shape.
-
-      ## Resolution
-      Completed in commit https://github.com/ivan-liuliaev/ai-service/commit/b8612a2eae4b757cd68f0aa87c0887da6231a518: Refine spread engine and output contract.
-
-  - id: final-sprint-bug-projected-margin-display
-    title: "Bug: displayed margin did not match projected score"
+  - id: sprint-4-bug-same-team-matchup-validation
+    title: "Bug: service allows team1 and team2 to be the same team"
     labels:
       - bug
     milestone: Sprint 4
     body: |
       ## Problem
-      The service could display a projected margin and cover edge that did not match the rounded projected score shown to the user.
-
-      ## Example
-      A response could show a projected score of `117-106`, which implies an 11 point margin, while also displaying a projected margin such as `+10.3`.
+      The API accepts a matchup where `team1` and `team2` refer to the same team.
 
       ## Expected behavior
-      The displayed projected margin and cover edge should be consistent with the displayed projected score.
+      A matchup should require two different teams. Same-team matchups should be rejected before analysis.
 
       ## Acceptance criteria
-      - Opening opinion sentence uses a displayed margin derived from the displayed projected score when projected scores are available.
-      - Displayed cover edge is calculated from that same displayed margin.
-      - API contract and README examples show consistent score, margin, and cover edge values.
-      - Tests cover the displayed score/margin consistency case.
+      - `POST /analyze-matchup` returns `400` when `team1` and `team2` are the same after trimming whitespace and comparing case-insensitively.
+      - Valid matchups with different teams still return `200`.
+      - API tests cover same-team validation.
 
-      ## Resolution
-      Completed in commit https://github.com/ivan-liuliaev/ai-service/commit/877afd7dd219e4b6eb1ace06471455f0b17d257b: Align displayed margin with projected score.
+  - id: sprint-4-feature-incomplete-context-warnings
+    title: "Feature: include warnings for incomplete matchup context"
+    labels:
+      - enhancement
+    milestone: Sprint 4
+    body: |
+      ## Feature
+      Add structured warnings to each matchup result when important context is missing.
+
+      ## Motivation
+      The service can return `too_close_to_call` when spread or metric context is incomplete, but clients should not need to parse the opinion text to understand why.
+
+      ## Acceptance criteria
+      - Each result includes a `warnings` array.
+      - Missing spread adds `missing_team1_spread`.
+      - Missing net rating inputs add `missing_net_rating`.
+      - Complete matchup context returns an empty warnings array.
+      - API contract and tests are updated.
