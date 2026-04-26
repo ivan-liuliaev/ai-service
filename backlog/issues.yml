@@ -32,7 +32,7 @@ issues:
       - API contract and tests are updated for the new response shape.
 
       ## Resolution
-      Completed in commit b8612a2: Refine spread engine and output contract.
+      Completed in commit https://github.com/ivan-liuliaev/ai-service/commit/b8612a2eae4b757cd68f0aa87c0887da6231a518: Refine spread engine and output contract.
 
   - id: final-sprint-bug-projected-margin-display
     title: "Bug: displayed margin did not match projected score"
@@ -56,4 +56,4 @@ issues:
       - Tests cover the displayed score/margin consistency case.
 
       ## Resolution
-      Completed in commit 877afd7: Align displayed margin with projected score.
+      Completed in commit https://github.com/ivan-liuliaev/ai-service/commit/877afd7dd219e4b6eb1ace06471455f0b17d257b: Align displayed margin with projected score.
