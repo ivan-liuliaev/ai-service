@@ -113,6 +113,7 @@ Spread convention used:
 
 - Invalid JSON, invalid shape, or empty fields -> `422`
 - Duplicate `id` values in one request -> `400`
+- Same-team matchup where `team1` and `team2` name the same team -> `400`
 - Unexpected server error -> `500`
 
 ## Tests

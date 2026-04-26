@@ -60,6 +60,7 @@
   - `shared.team1_spread`
 - Any subset of fields is still accepted.
 - Duplicate `id` values in the same request are rejected with `400`.
+- Same-team matchups are rejected with `400` after trimming whitespace and comparing team names case-insensitively.
 
 ### Spread convention
 
@@ -111,5 +112,6 @@
 
 - `200` success
 - `400` contract or business-rule error, such as duplicate ids
+- `400` same-team matchup, such as `team1` and `team2` both naming the same team
 - `422` malformed request payload
 - `500` internal server error

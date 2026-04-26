@@ -427,6 +427,23 @@ def test_analyze_matchup_duplicate_id_returns_400() -> None:
     assert "Duplicate matchup id" in response.json()["detail"]
 
 
+def test_analyze_matchup_same_team_returns_400() -> None:
+    response = client.post(
+        "/analyze-matchup",
+        json={
+            "matchups": [
+                {
+                    "id": "same",
+                    "team1": " Boston Celtics ",
+                    "team2": "boston celtics",
+                }
+            ]
+        },
+    )
+    assert response.status_code == 400
+    assert "two different teams" in response.json()["detail"]
+
+
 def test_analyze_matchup_invalid_payload_returns_422() -> None:
     response = client.post("/analyze-matchup", json={"matchups": []})
     assert response.status_code == 422

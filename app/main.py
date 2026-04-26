@@ -100,6 +100,10 @@ def _format_context_lines(matchup: Matchup) -> str:
     )
 
 
+def _normalize_team_name(team_name: str) -> str:
+    return " ".join(team_name.casefold().split())
+
+
 def _extract_team1_spread(matchup: Matchup) -> float | None:
     if not matchup.context or not matchup.context.shared:
         return None
@@ -645,6 +649,11 @@ def analyze_matchup(payload: AnalyzeMatchupRequest) -> AnalyzeMatchupResponse:
             raise HTTPException(
                 status_code=400,
                 detail=f"Duplicate matchup id '{matchup.id}' in request.",
+            )
+        if _normalize_team_name(matchup.team1) == _normalize_team_name(matchup.team2):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Matchup '{matchup.id}' must include two different teams.",
             )
 
         seen_ids.add(matchup.id)
