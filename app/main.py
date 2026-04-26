@@ -63,6 +63,7 @@ class MatchupResult(BaseModel):
     projected_margin: float | None
     cover_edge: float | None
     projected_score: ProjectedScore | None
+    warnings: list[str]
     opinion: str
 
 
@@ -140,6 +141,18 @@ def _metric(metrics: dict[str, float], key: str) -> float | None:
     if value is None:
         return None
     return float(value)
+
+
+def _build_warnings(matchup: Matchup) -> list[str]:
+    warnings: list[str] = []
+    team1, team2 = _team_metrics(matchup)
+
+    if _extract_team1_spread(matchup) is None:
+        warnings.append("missing_team1_spread")
+    if _metric(team1, "net_rating") is None or _metric(team2, "net_rating") is None:
+        warnings.append("missing_net_rating")
+
+    return warnings
 
 
 def _normalize_hit_rate(value: float | None) -> float | None:
@@ -625,6 +638,7 @@ def _build_result(matchup: Matchup) -> MatchupResult:
         projected_margin=_display_projected_margin(decision),
         cover_edge=_display_cover_edge(decision),
         projected_score=projected_score,
+        warnings=_build_warnings(matchup),
         opinion=generate_opinion(matchup, decision),
     )
 

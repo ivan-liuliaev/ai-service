@@ -98,6 +98,7 @@ curl -s -X POST http://localhost:8000/analyze-matchup \
         "team1": 117,
         "team2": 106
       },
+      "warnings": [],
       "opinion": "The Boston Celtics cover the -4.5 spread with a projected 117-106 score, a +11.0-point margin, and a +6.5-point edge. Boston Celtics' +8.4 net rating and 70% line hit rate put them well ahead of this number. A projected pace of 100.3 and a +4.2 rebounding differential reinforce their ability to stay ahead on the glass and the scoreboard."
     }
   ]
@@ -138,6 +139,7 @@ Sanity checks covered:
 
 - valid request without context
 - requested four-metric projection path
+- structured warnings for incomplete context
 - commutative spread math on team swap
 - duplicate id handling
 - invalid payload handling
