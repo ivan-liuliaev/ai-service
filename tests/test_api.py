@@ -34,6 +34,7 @@ def test_analyze_matchup_success_without_context() -> None:
     assert body["results"][0]["projected_margin"] is None
     assert body["results"][0]["cover_edge"] is None
     assert body["results"][0]["projected_score"] is None
+    assert body["results"][0]["warnings"] == ["missing_team1_spread", "missing_net_rating"]
     assert "Boston Celtics" in body["results"][0]["opinion"]
     assert "Team1" not in body["results"][0]["opinion"]
 
@@ -73,6 +74,7 @@ def test_analyze_matchup_uses_requested_metric_set() -> None:
     assert result["projected_margin"] == 11.0
     assert result["cover_edge"] == 6.5
     assert result["projected_score"] == {"team1": 117, "team2": 106}
+    assert result["warnings"] == []
     assert result["opinion"].startswith("The Boston Celtics cover the -4.5 spread")
     assert "Team1" not in result["opinion"]
 
@@ -384,6 +386,7 @@ def test_missing_spread_returns_projection_but_not_cover_edge() -> None:
     assert result["projected_margin"] is not None
     assert result["cover_edge"] is None
     assert result["projected_score"] is not None
+    assert result["warnings"] == ["missing_team1_spread"]
 
 
 def test_missing_net_rating_forces_too_close() -> None:
@@ -411,6 +414,30 @@ def test_missing_net_rating_forces_too_close() -> None:
     assert result["projected_margin"] is None
     assert result["cover_edge"] is None
     assert result["projected_score"] is None
+    assert result["warnings"] == ["missing_net_rating"]
+
+
+def test_context_warnings_include_each_missing_input_once() -> None:
+    response = client.post(
+        "/analyze-matchup",
+        json={
+            "matchups": [
+                {
+                    "id": "warnings",
+                    "team1": "Miami Heat",
+                    "team2": "Atlanta Hawks",
+                    "context": {
+                        "team1": {"pace": 97.2},
+                        "team2": {"net_rating": 1.4, "pace": 99.8},
+                    },
+                }
+            ]
+        },
+    )
+    assert response.status_code == 200
+
+    result = response.json()["results"][0]
+    assert result["warnings"] == ["missing_team1_spread", "missing_net_rating"]
 
 
 def test_analyze_matchup_duplicate_id_returns_400() -> None:

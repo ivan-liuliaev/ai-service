@@ -81,6 +81,7 @@
         "team1": 117,
         "team2": 106
       },
+      "warnings": [],
       "opinion": "The Boston Celtics cover the -4.5 spread with a projected 117-106 score, a +11.0-point margin, and a +6.5-point edge. Boston Celtics' +8.4 net rating and 70% line hit rate put them well ahead of this number. A projected pace of 100.3 and a +4.2 rebounding differential reinforce their ability to stay ahead on the glass and the scoreboard."
     }
   ]
@@ -98,6 +99,9 @@
 - `projected_margin` is the deterministic Team1 margin projection and may be `null` if the net-rating baseline is unavailable.
 - `cover_edge` is `projected_margin + team1_spread` and may be `null` if the spread is missing or the margin cannot be computed.
 - `projected_score` is an object with integer `team1` and `team2` projections, or `null` if the margin cannot be computed.
+- `warnings` is a list of structured warning codes for incomplete context:
+  - `missing_team1_spread`
+  - `missing_net_rating`
 - `opinion` is freeform text, now expected to use actual team names and summarize the verdict, score or margin, edge, and the key metrics behind the call.
 
 ## Reliability behavior
